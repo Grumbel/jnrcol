@@ -1,3 +1,28 @@
+/** 
+ ** Copyright (c) 2006 Ingo Ruhnke <grumbel@gmx.de>
+ ** 
+ ** This software is provided 'as-is', without any express or implied
+ ** warranty. In no event will the authors be held liable for any
+ ** damages arising from the use of this software.
+ ** 
+ ** Permission is granted to anyone to use this software for any
+ ** purpose, including commercial applications, and to alter it and
+ ** redistribute it freely, subject to the following restrictions:
+ ** 
+ **   1. The origin of this software must not be misrepresented; you
+ **      must not claim that you wrote the original software. If you
+ **      use this software in a product, an acknowledgment in the
+ **      product documentation would be appreciated but is not
+ **      required.
+ ** 
+ **   2. Altered source versions must be plainly marked as such, and
+ **      must not be misrepresented as being the original software.
+ ** 
+ **   3. This notice may not be removed or altered from any source
+ **      distribution.
+ ** 
+ */
+
 #include <SDL.h>
 
 #define TTY_MAJOR_VERSION  0;
@@ -12,27 +37,46 @@ struct TTY_Font
   int glyph_height;
 };
 
-void TTY_init();
+struct TTY
+{
+  char** framebuffer;
 
-void TTY_deinit();
+  TTY_Font* font;
 
-void TTY_version(Uint32* major, Uint32* minor, Uint32* patch);
+  int width;
+  int height;
 
-void TTY_cursor_set_pos(int x, int y);
-void TTY_cursor_get_pos(int* x, int* y);
+  int cursor_x;
+  int cursor_y;
 
-void TTY_clear();
+  int print_cursor;
+};
 
-void TTY_write(const char* buffer, int len);
+TTY_Font* TTY_CreateFont(SDL_Surface* surface, int glyph_width, int glyph_height);
+void      TTY_FreeFont(TTY_Font* font);
 
-void TTY_print(const char* buffer);
-void TTY_putchar(char chr);
-void TTY_putchar_nomove(char chr);
+TTY* TTY_Create(int width, int height);
+void TTY_Free(TTY* tty);
 
-void TTY_print_cursor(int i);
+/** The the current cursor position to \a x, \a y, if x or y are
+    outside the range of the TTY, they automatically wrap around */
+void TTY_SetCursor(TTY* tty, int x, int y);
 
-void TTY_draw(SDL_Surface* screen, int x, int y);
+/** Write the current cursor position to \a x and \a y */
+void TTY_GetCursor(TTY* tty, int* x, int* y);
 
-void TTY_get_glypth_rect(TTY_Font* font, char idx, SDL_Rect* rect);
+void TTY_Clear(TTY* tty);
+
+void TTY_write(TTY* tty, const char* buffer, int len);
+
+void TTY_print(TTY* tty, const char* buffer);
+void TTY_putchar(TTY* tty, char chr);
+void TTY_putchar_nomove(TTY* tty, char chr);
+
+void TTY_print_cursor(TTY* tty, int i);
+
+void TTY_Blit(TTY* tty, SDL_Surface* screen, int x, int y);
+
+void TTY_get_glypth_rect(TTY* tty, TTY_Font* font, char idx, SDL_Rect* rect);
 
 /* EOF */
