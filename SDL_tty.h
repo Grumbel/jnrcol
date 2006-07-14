@@ -74,6 +74,7 @@ void TTY_putchar(TTY* tty, char chr);
 void TTY_putchar_nomove(TTY* tty, char chr);
 
 void TTY_print_cursor(TTY* tty, int i);
+void TTY_printf(TTY* tty, const char *fmt, ...)  __attribute__ ((format (printf, 2, 3)));
 
 void TTY_Blit(TTY* tty, SDL_Surface* screen, int x, int y);
 

@@ -23,6 +23,9 @@
  ** 
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include <SDL_image.h>
 #include <assert.h>
 #include "SDL_tty.h"
@@ -236,6 +239,42 @@ void TTY_Blit(TTY* tty, SDL_Surface* screen, int screen_x, int screen_y)
     }
 }
 
+void TTY_printf(TTY* tty, const char *fmt, ...)
+{
+  /* Guess we need no more than 100 bytes. */
+  int n, size = 100;
+  char *p, *np;
+  va_list ap;
+
+  if ((p = malloc (size)) == NULL)
+    return; /* FIXME: Error */
+
+  while (1) {
+    /* Try to print in the allocated space. */
+    va_start(ap, fmt);
+    n = vsnprintf (p, size, fmt, ap);
+    va_end(ap);
+    /* If that worked, return the string. */
+    if (n > -1 && n < size)
+      {
+        TTY_print(tty, p);
+        free(p);
+        return; /* Success */
+      }
+    /* Else try again with more space. */
+    if (n > -1)    /* glibc 2.1 */
+      size = n+1; /* precisely what is needed */
+    else           /* glibc 2.0 */
+      size *= 2;  /* twice the old size */
+    if ((np = realloc (p, size)) == NULL) {
+      free(p);
+      return; /* FIXME: Error */
+    } else {
+      p = np;
+    }
+  }
+}
+
 #ifdef __TEST__
 int main()
 {
@@ -262,12 +301,12 @@ int main()
       exit(EXIT_FAILURE);
     }
 
-  tty = TTY_Create(500/16, 240/16);
+  tty = TTY_Create(500/8, 300/12);
 
   TTY_print_cursor(tty, 1);
 
-  TTY_print(tty, "Hello World\n");
-  TTY_print(tty, "Welcome to console Version 0.0.0\n\n");
+  TTY_printf(tty, "Hello World\n");
+  TTY_printf(tty, "Welcome to console Version %d.%d.%d\n\n", 1, 2, 3);
 
   puts("Init successfull");
   
