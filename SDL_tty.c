@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <SDL.h>
+#include <SDL_image.h>
 #include "font8x12.h"
 #include "SDL_tty.h"
 
@@ -67,9 +68,10 @@ TTY_Create(int width, int height)
   int i;
   TTY* tty = (TTY*)malloc(sizeof(TTY));
 
-  SDL_Surface* temp = TTY_CreateRGBSurface(font8x12);
+  /* SDL_Surface* temp = TTY_CreateRGBSurface(font8x12); */
+  SDL_Surface* temp = IMG_Load("c64_16x16.png");
       
-  tty->font = TTY_CreateFont(temp, 8, 14);
+  tty->font = TTY_CreateFont(temp, 16, 16);
 
   SDL_FreeSurface(temp);
   
@@ -304,9 +306,10 @@ int main()
     }
   atexit(SDL_Quit);
   
-  screen = SDL_SetVideoMode(640, 480, 0,
+  screen = SDL_SetVideoMode(800, 600, 0,
                             SDL_HWSURFACE|SDL_DOUBLEBUF);
-  
+
+  SDL_WM_SetCaption("C64 Look alike", NULL);
   SDL_EnableUNICODE(1); 
   SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
@@ -316,12 +319,14 @@ int main()
       exit(EXIT_FAILURE);
     }
 
-  tty = TTY_Create(500/8, 300/12);
+  tty = TTY_Create(40, 30);
 
   TTY_print_cursor(tty, 1);
 
-  TTY_printf(tty, "Hello World\n");
-  TTY_printf(tty, "Welcome to console Version %d.%d.%d\n\n", 1, 2, 3);
+  TTY_printf(tty, "\n    **** COMMODORE 64 BASIC V%d ****\n\n", 2);
+  TTY_printf(tty, " %dk RAM SYSTEM  38911 BASIC BYTES FREE\n", 64);
+  TTY_printf(tty, "READY.\n");
+
 
   while (!quit)
     {
@@ -381,17 +386,18 @@ int main()
             }
         }
 
-      SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 150, 20, 50));
+      SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 138, 138, 255));
 
       {
         SDL_Rect rect;
-        rect.x = 50;
-        rect.y = 50;
+        rect.x = 80;
+        rect.y = 60;
         rect.w = tty->width * tty->font->glyph_width;
         rect.h = tty->height * tty->font->glyph_height;
-        SDL_FillRect(screen, &rect, SDL_MapRGB(screen->format, 250, 20, 50));
+
+        SDL_FillRect(screen, &rect, SDL_MapRGB(screen->format, 0, 0, 202));
       }
-      TTY_Blit(tty, screen, 50, 50);
+      TTY_Blit(tty, screen, 80, 60);
 
       SDL_Flip(screen);
     }
