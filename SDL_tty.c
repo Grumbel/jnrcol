@@ -324,9 +324,8 @@ int main()
   TTY_print_cursor(tty, 1);
 
   TTY_printf(tty, "\n    **** COMMODORE 64 BASIC V%d ****\n\n", 2);
-  TTY_printf(tty, " %dk RAM SYSTEM  38911 BASIC BYTES FREE\n", 64);
+  TTY_printf(tty, " %dk RAM SYSTEM  38911 BASIC BYTES FREE\n\n", 64);
   TTY_printf(tty, "READY.\n");
-
 
   while (!quit)
     {

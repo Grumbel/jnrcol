@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <iostream>
+#include "SDL_tty.h"
 #include "jumpnrun.hpp"
 
 char* level[] = {
@@ -35,6 +36,7 @@ char get_tile(float x, float y)
 }
 
 SDL_Surface *screen;
+TTY* tty;
 
 void draw_rect(int x, int y, int w, int h, unsigned char r, unsigned char b, unsigned char g, bool down = false)
 {
@@ -124,9 +126,8 @@ public:
     if (jump)
       vel_y = -5;
 
-    std::cout << "Velocity: " << vel_x << " Tile: " 
-              << get_tile(x, y)
-              << "                   \r" << std::flush;
+    TTY_SetCursor(tty, 0, 28);
+    TTY_printf(tty, "Velocity: %f %d       \r",  vel_x, get_tile(x, y));
 
     float last_x = x;
     float last_y = y;
@@ -220,9 +221,15 @@ public:
     rect.x = 0;
     rect.y = 0;
     rect.w = 640;
-      rect.h = 480;
+    rect.h = 480;
 
     SDL_SetClipRect(screen, &rect); 
+
+    tty = TTY_Create(40, 30);
+
+    TTY_printf(tty, "\n    **** COMMODORE 64 BASIC V2 ****\n\n");
+    TTY_printf(tty, " 64k RAM SYSTEM  38911 BASIC BYTES FREE\n\n");
+    TTY_printf(tty, "READY.\n\n");
   }
 
   void run()
@@ -287,11 +294,14 @@ public:
             delta -= 0.01f;
           }
         player.draw();
+        TTY_Blit(tty, screen, 0, 0);
         SDL_Flip(screen);      
       }
   }
+
   void deinit()
   {
+    TTY_Free(tty);
   }
 };
 

@@ -23,11 +23,19 @@
  ** 
  */
 
+#ifndef _SDL_TTY_H
+#define _SDL_TTY_H
+
 #include <SDL.h>
 
 #define TTY_MAJOR_VERSION  0;
 #define TTY_MINOR_VERSION  0;
 #define TTY_PATH_VERSION   0;
+
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct TTY_Font
 {
@@ -86,5 +94,12 @@ void TTY_printf(TTY* tty, const char *fmt, ...)  __attribute__ ((format (printf,
 void TTY_Blit(TTY* tty, SDL_Surface* screen, int x, int y);
 
 void TTY_get_glypth_rect(TTY_Font* font, char idx, SDL_Rect* rect);
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif
 
 /* EOF */
