@@ -79,6 +79,38 @@ TTY_GetGlyph(TTY_Font* font, char idx, SDL_Rect* rect)
   rect->h = font->glyph_height;
 }
 
+void
+TTY_Print(TTY_Font* font, SDL_Surface* screen, int x, int y, Uint32 flags, const char *str)
+{
+  SDL_Rect src_rect;
+  SDL_Rect dst_rect;
+
+  int x_of = 0;
+  int y_of = 0;
+
+  int i;
+
+  for(i = 0; str[i] != '\0'; ++i)
+    {
+      if (str[i] == '\n')
+        {
+          x_of = 0;
+          y_of += font->glyph_height;
+        }
+      else
+        {
+          TTY_GetGlyph(font, str[i], &src_rect);
+  
+          dst_rect.x = x + x_of;
+          dst_rect.y = y + y_of;
+  
+          SDL_BlitSurface(font->surface, &src_rect, screen, &dst_rect);
+
+          x_of += font->glyph_width;
+        }
+    }
+}
+
 TTY*
 TTY_Create(int width, int height)
 {
@@ -276,7 +308,7 @@ void TTY_printf(TTY* tty, const char *fmt, ...)
   while (1) {
     /* Try to print in the allocated space. */
     va_start(ap, fmt);
-    n = vsnprintf (p, size, fmt, ap);
+    n = vsnprintf(p, size, fmt, ap);
     va_end(ap);
     /* If that worked, return the string. */
     if (n > -1 && n < size)

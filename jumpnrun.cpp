@@ -11,10 +11,10 @@ char* level[] = {
   "                    ",
   "                    ",
   "                    ",
-  "         ######     ",
+  "#        ######     ",
   "                    ",
   "                    ",
-  "                    ",
+  "#                   ",
   "      ####      #   ",
   "                    ",
   "                    ",
@@ -171,6 +171,8 @@ public:
       draw_rect(int(x - 16), int(y - 32) - 16, 32, 32, 150, 200, 150);
     else
       draw_rect(int(x - 16), int(y - 64) - 16, 32, 64, 150, 200, 150);
+
+    TTY_Print(tty->font, screen, (int)x, (int)y-16, 0, "Hello\nWorld");
   }
   
   void left()

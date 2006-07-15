@@ -80,6 +80,11 @@ typedef struct TTY
 TTY_Font* TTY_CreateFont(SDL_Surface* surface, int glyph_width, int glyph_height, char* letters);
 void      TTY_FreeFont(TTY_Font* font);
 
+void TTY_GetGlypth(TTY_Font* font, char idx, SDL_Rect* rect);
+
+void TTY_Print(TTY_Font* font, SDL_Surface* screen, int x, int y, Uint32 flags, const char *str);
+/* void TTY_Printf(TTY_Font* font, const char *fmt, ...)  __attribute__ ((format (printf, 2, 3))); */
+
 TTY* TTY_Create(int width, int height);
 void TTY_Free(TTY* tty);
 
@@ -112,8 +117,6 @@ void TTY_putchar_nomove(TTY* tty, char chr);
 void TTY_printf(TTY* tty, const char *fmt, ...)  __attribute__ ((format (printf, 2, 3)));
 
 void TTY_Blit(TTY* tty, SDL_Surface* screen, int x, int y);
-
-void TTY_GetGlypth(TTY_Font* font, char idx, SDL_Rect* rect);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
