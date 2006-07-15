@@ -37,17 +37,22 @@
                                       name##_rmask, name##_gmask,  name##_bmask, name##_amask )
 
 TTY_Font*
-TTY_CreateFont(SDL_Surface* surface, int glyph_width, int glyph_height)
+TTY_CreateFont(SDL_Surface* surface, int glyph_width, int glyph_height, char* letters)
 {
+  int i;
   TTY_Font* font = (TTY_Font*)malloc(sizeof(TTY_Font));
 
   font->surface = SDL_DisplayFormatAlpha(surface);
 
-  if(!font->surface) 
+  if (!font->surface) 
     {
-      printf("TTY_CreateFont: conversation of surface failed\n");
+      TTY_SetError("TTY_CreateFont: conversation of surface failed");
       return 0;
     }
+  
+  memset(font->transtbl, 0, 256);
+  for(i = 0; letters[i] != '\0'; ++i)
+    font->transtbl[(int)letters[i]] = i;
 
   font->glyph_width  = glyph_width;
   font->glyph_height = glyph_height;
@@ -62,6 +67,18 @@ TTY_FreeFont(TTY_Font* font)
   free(font);
 }
 
+void
+TTY_GetGlyph(TTY_Font* font, char idx, SDL_Rect* rect)
+{
+  idx = font->transtbl[(int)idx];
+
+  rect->x = (idx % (font->surface->w / font->glyph_width)) * font->glyph_width;
+  rect->y = (idx / (font->surface->w / font->glyph_width)) * font->glyph_height;
+
+  rect->w = font->glyph_width;
+  rect->h = font->glyph_height;
+}
+
 TTY*
 TTY_Create(int width, int height)
 {
@@ -71,7 +88,9 @@ TTY_Create(int width, int height)
   /* SDL_Surface* temp = TTY_CreateRGBSurface(font8x12); */
   SDL_Surface* temp = IMG_Load("c64_16x16.png");
       
-  tty->font = TTY_CreateFont(temp, 16, 16);
+  tty->font = TTY_CreateFont(temp, 16, 16, 
+                             "\x7f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                             "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
 
   SDL_FreeSurface(temp);
   
@@ -83,7 +102,8 @@ TTY_Create(int width, int height)
   tty->width  = width;
   tty->height = height;
 
-  tty->print_cursor = 0;
+  tty->cursor_character = 0;
+  tty->print_cursor     = 0;
 
   TTY_Clear(tty);
 
@@ -180,17 +200,12 @@ void TTY_print(TTY* tty, const char* buffer)
   TTY_write(tty, buffer, strlen(buffer));
 }
 
-void
-TTY_get_glypth_rect(TTY_Font* font, char idx, SDL_Rect* rect)
+void TTY_SetCursorCharacter(TTY* tty, int chr)
 {
-  rect->x = (idx % (font->surface->w / font->glyph_width)) * font->glyph_width;
-  rect->y = (idx / (font->surface->w / font->glyph_width)) * font->glyph_height;
-
-  rect->w = font->glyph_width;
-  rect->h = font->glyph_height;
+  tty->cursor_character = chr;
 }
 
-void TTY_print_cursor(TTY* tty, int i)
+void TTY_EnableVisibleCursor(TTY* tty, int i)
 {
   tty->print_cursor = i;
 }
@@ -210,7 +225,7 @@ void TTY_Blit(TTY* tty, SDL_Surface* screen, int screen_x, int screen_y)
             {
               if (x == tty->cursor_x && y == tty->cursor_y && (SDL_GetTicks()/200) % 2 == 0)
                 {
-                  TTY_get_glypth_rect(tty->font, 0, &src_rect);
+                  TTY_GetGlyph(tty->font, tty->cursor_character, &src_rect);
 
                   dst_rect.x = screen_x + x * tty->font->glyph_width;
                   dst_rect.y = screen_y + y * tty->font->glyph_height;
@@ -222,7 +237,7 @@ void TTY_Blit(TTY* tty, SDL_Surface* screen, int screen_x, int screen_y)
                   char chr = tty->framebuffer[y][x];
                   if (chr)
                     {
-                      TTY_get_glypth_rect(tty->font, chr, &src_rect);
+                      TTY_GetGlyph(tty->font, chr, &src_rect);
 
                       dst_rect.x = screen_x + x * tty->font->glyph_width;
                       dst_rect.y = screen_y + y * tty->font->glyph_height;
@@ -236,7 +251,7 @@ void TTY_Blit(TTY* tty, SDL_Surface* screen, int screen_x, int screen_y)
               char chr = tty->framebuffer[y][x];
               if (chr)
                 {
-                  TTY_get_glypth_rect(tty->font, chr, &src_rect);
+                  TTY_GetGlyph(tty->font, chr, &src_rect);
 
                   dst_rect.x = screen_x + x * tty->font->glyph_width;
                   dst_rect.y = screen_y + y * tty->font->glyph_height;
@@ -307,7 +322,7 @@ int main()
   atexit(SDL_Quit);
   
   screen = SDL_SetVideoMode(800, 600, 0,
-                            SDL_HWSURFACE|SDL_DOUBLEBUF);
+                            SDL_HWSURFACE|SDL_DOUBLEBUF); /* |SDL_FULLSCREEN);*/
 
   SDL_WM_SetCaption("C64 Look alike", NULL);
   SDL_EnableUNICODE(1); 
@@ -321,7 +336,8 @@ int main()
 
   tty = TTY_Create(40, 30);
 
-  TTY_print_cursor(tty, 1);
+  TTY_SetCursorCharacter(tty, '\x7f');
+  TTY_EnableVisibleCursor(tty, 1);
 
   TTY_printf(tty, "\n    **** COMMODORE 64 BASIC V%d ****\n\n", 2);
   TTY_printf(tty, " %dk RAM SYSTEM  38911 BASIC BYTES FREE\n\n", 64);
@@ -341,6 +357,10 @@ int main()
               if (event.key.keysym.sym == SDLK_RETURN)
                 {
                   TTY_putchar(tty, '\n');
+                }
+              else if (event.key.keysym.sym == SDLK_ESCAPE)
+                {
+                  exit(EXIT_SUCCESS);
                 }
               else if (event.key.keysym.sym == SDLK_BACKSPACE)
                 {

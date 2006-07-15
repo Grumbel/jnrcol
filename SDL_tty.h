@@ -28,21 +28,27 @@
 
 #include <SDL.h>
 
-#define TTY_MAJOR_VERSION  0;
-#define TTY_MINOR_VERSION  0;
-#define TTY_PATH_VERSION   0;
-
 /* Set up for C function definitions, even when using C++ */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
+#define TTY_MAJOR_VERSION  0;
+#define TTY_MINOR_VERSION  0;
+#define TTY_PATH_VERSION   0;
+
+#define TTY_SetError	SDL_SetError
+#define TTY_GetError	SDL_GetError
+
 typedef struct TTY_Font
 {
   SDL_Surface* surface;
 
-  int glyph_width;
-  int glyph_height;
+  char transtbl[256];
+
+  int  glyph_width;
+  int  glyph_height;
 }  TTY_Font;
 
 typedef struct TTY
@@ -57,10 +63,21 @@ typedef struct TTY
   int cursor_x;
   int cursor_y;
 
+  int cursor_character;
   int print_cursor;
+
 }  TTY;
 
-TTY_Font* TTY_CreateFont(SDL_Surface* surface, int glyph_width, int glyph_height);
+/**
+ *  Creates a font from an SDL_Surface. The letter with index 0 is at
+ *  the top/left of the image
+ *
+ *  @param surface      The SDL_Surface that contains all letters
+ *  @param glyph_width  The width of a glyph
+ *  @param glyph_height The height of a glyph
+ *  @param letters      The letters that are present in the font
+ */
+TTY_Font* TTY_CreateFont(SDL_Surface* surface, int glyph_width, int glyph_height, char* letters);
 void      TTY_FreeFont(TTY_Font* font);
 
 TTY* TTY_Create(int width, int height);
@@ -77,6 +94,10 @@ void TTY_SetCursor(TTY* tty, int x, int y);
  */
 void TTY_GetCursor(TTY* tty, int* x, int* y);
 
+void TTY_SetCursorCharacter(TTY* tty, int chr);
+
+void TTY_EnableVisibleCursor(TTY* tty, int i);
+
 /** 
  *  Clear the tty's framebuffer
  */
@@ -88,12 +109,11 @@ void TTY_print(TTY* tty, const char* buffer);
 void TTY_putchar(TTY* tty, char chr);
 void TTY_putchar_nomove(TTY* tty, char chr);
 
-void TTY_print_cursor(TTY* tty, int i);
 void TTY_printf(TTY* tty, const char *fmt, ...)  __attribute__ ((format (printf, 2, 3)));
 
 void TTY_Blit(TTY* tty, SDL_Surface* screen, int x, int y);
 
-void TTY_get_glypth_rect(TTY_Font* font, char idx, SDL_Rect* rect);
+void TTY_GetGlypth(TTY_Font* font, char idx, SDL_Rect* rect);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
