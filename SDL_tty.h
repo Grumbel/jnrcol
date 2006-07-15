@@ -58,13 +58,20 @@ void      TTY_FreeFont(TTY_Font* font);
 TTY* TTY_Create(int width, int height);
 void TTY_Free(TTY* tty);
 
-/** The the current cursor position to \a x, \a y, if x or y are
-    outside the range of the TTY, they automatically wrap around */
+/**
+ *  The the current cursor position to \a x, \a y, if x or y are
+ *  outside the range of the TTY, they automatically wrap around 
+ */
 void TTY_SetCursor(TTY* tty, int x, int y);
 
-/** Write the current cursor position to \a x and \a y */
+/**
+ *  Write the current cursor position to \a x and \a y 
+ */
 void TTY_GetCursor(TTY* tty, int* x, int* y);
 
+/** 
+ *  Clear the tty's framebuffer
+ */
 void TTY_Clear(TTY* tty);
 
 void TTY_write(TTY* tty, const char* buffer, int len);

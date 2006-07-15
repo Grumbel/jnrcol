@@ -26,9 +26,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <SDL_image.h>
 #include <assert.h>
+#include <SDL.h>
+#include "font8x12.h"
 #include "SDL_tty.h"
+
+#define TTY_CreateRGBSurface(name) SDL_CreateRGBSurfaceFrom( name##_data, \
+                                      name##_width, name##_height, name##_bpp, name##_pitch, \
+                                      name##_rmask, name##_gmask,  name##_bmask, name##_amask )
 
 TTY_Font*
 TTY_CreateFont(SDL_Surface* surface, int glyph_width, int glyph_height)
@@ -62,8 +67,10 @@ TTY_Create(int width, int height)
   int i;
   TTY* tty = (TTY*)malloc(sizeof(TTY));
 
-  SDL_Surface* temp = IMG_Load("8x14font.png");
+  SDL_Surface* temp = TTY_CreateRGBSurface(font8x12);
+      
   tty->font = TTY_CreateFont(temp, 8, 14);
+
   SDL_FreeSurface(temp);
   
   /* Create Framebuffer */
@@ -316,8 +323,6 @@ int main()
   TTY_printf(tty, "Hello World\n");
   TTY_printf(tty, "Welcome to console Version %d.%d.%d\n\n", 1, 2, 3);
 
-  puts("Init successfull");
-  
   while (!quit)
     {
       while(SDL_PollEvent(&event))
