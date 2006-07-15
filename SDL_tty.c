@@ -276,6 +276,13 @@ void TTY_printf(TTY* tty, const char *fmt, ...)
 }
 
 #ifdef __TEST__
+
+/*  Compile via:
+ *
+ *   gcc -D__TEST__ -ansi -pedantic -Wall -g -O2 -o SDL_tty SDL_tty.c `sdl-config --cflags --libs` -lSDL_image 
+ *
+ */
+
 int main()
 {
   SDL_Surface* screen;
@@ -294,6 +301,7 @@ int main()
                             SDL_HWSURFACE|SDL_DOUBLEBUF);
   
   SDL_EnableUNICODE(1); 
+  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
   if ( screen == NULL )
     {
