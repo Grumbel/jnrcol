@@ -66,6 +66,9 @@ typedef struct TTY
   int cursor_character;
   int print_cursor;
 
+  int scroll_x;
+  int scroll_y;
+
 }  TTY;
 
 /**
@@ -93,6 +96,9 @@ void TTY_Free(TTY* tty);
  *  outside the range of the TTY, they automatically wrap around 
  */
 void TTY_SetCursor(TTY* tty, int x, int y);
+
+void TTY_SetScrollOffset(TTY* tty, int scroll_x, int scroll_y);
+void TTY_GetScrollOffset(TTY* tty, int* scroll_x, int* scroll_y);
 
 /**
  *  Write the current cursor position to \a x and \a y 

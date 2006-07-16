@@ -32,6 +32,15 @@
 #include "font8x12.h"
 #include "SDL_tty.h"
 
+static int modulo(int x, int y)
+{
+  int xmody = x - (x / y) * y;
+  if (xmody && ((y ^ xmody) < 0)) {
+    xmody += y;
+  }
+  return xmody;
+}
+
 #define TTY_CreateRGBSurface(name) SDL_CreateRGBSurfaceFrom( name##_data, \
                                       name##_width, name##_height, name##_bpp, name##_pitch, \
                                       name##_rmask, name##_gmask,  name##_bmask, name##_amask )
@@ -137,6 +146,9 @@ TTY_Create(int width, int height)
   tty->cursor_character = 0;
   tty->print_cursor     = 0;
 
+  tty->scroll_x = 0;
+  tty->scroll_y = 0;
+  
   TTY_Clear(tty);
 
   return tty;
@@ -155,10 +167,22 @@ TTY_Free(TTY* tty)
   free(tty);
 }
 
+void TTY_SetScrollOffset(TTY* tty, int scroll_x, int scroll_y)
+{
+  tty->scroll_x = scroll_x;
+  tty->scroll_y = scroll_y;
+}
+
+void TTY_GetScrollOffset(TTY* tty, int* scroll_x, int* scroll_y)
+{
+  *scroll_x = tty->scroll_x;
+  *scroll_y = tty->scroll_y;
+}
+
 void TTY_SetCursor(TTY* tty, int x, int y)
 {
-  tty->cursor_x = ((x % tty->width)  + tty->width)  % tty->width;
-  tty->cursor_y = ((y % tty->height) + tty->height) % tty->height;
+  tty->cursor_x = modulo(x, tty->width);
+  tty->cursor_y = modulo(y, tty->height);
 }
 
 void TTY_GetCursor(TTY* tty, int* x, int* y)
@@ -266,7 +290,7 @@ void TTY_Blit(TTY* tty, SDL_Surface* screen, int screen_x, int screen_y)
                 }
               else
                 {
-                  char chr = tty->framebuffer[y][x];
+                  char chr = tty->framebuffer[modulo(y + tty->scroll_y, tty->height)][modulo(x + tty->scroll_x, tty->width)];
                   if (chr)
                     {
                       TTY_GetGlyph(tty->font, chr, &src_rect);
@@ -280,7 +304,7 @@ void TTY_Blit(TTY* tty, SDL_Surface* screen, int screen_x, int screen_y)
             }
           else
             {          
-              char chr = tty->framebuffer[y][x];
+              char chr = tty->framebuffer[modulo(y + tty->scroll_y, tty->height)][modulo(x + tty->scroll_x, tty->width)];
               if (chr)
                 {
                   TTY_GetGlyph(tty->font, chr, &src_rect);
@@ -409,6 +433,33 @@ int main()
                   TTY_SetCursor(tty, cx, cy);
                   TTY_putchar_nomove(tty, 0);
                 }
+
+              else if (event.key.keysym.sym == SDLK_HOME)
+                {
+                  int sx, sy;
+                  TTY_GetScrollOffset(tty, &sx, &sy);
+                  TTY_SetScrollOffset(tty, sx, sy + 1);
+                }
+              else if (event.key.keysym.sym == SDLK_END)
+                {
+                  int sx, sy;
+                  TTY_GetScrollOffset(tty, &sx, &sy);
+                  TTY_SetScrollOffset(tty, sx, sy - 1);
+                }
+
+              else if (event.key.keysym.sym == SDLK_DELETE)
+                {
+                  int sx, sy;
+                  TTY_GetScrollOffset(tty, &sx, &sy);
+                  TTY_SetScrollOffset(tty, sx - 1, sy);
+                }
+              else if (event.key.keysym.sym == SDLK_PAGEDOWN)
+                {
+                  int sx, sy;
+                  TTY_GetScrollOffset(tty, &sx, &sy);
+                  TTY_SetScrollOffset(tty, sx + 1, sy);
+                }
+
               else if (event.key.keysym.sym == SDLK_LEFT)
                 {
                   int cx, cy; TTY_GetCursor(tty, &cx, &cy);
