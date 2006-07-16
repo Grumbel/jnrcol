@@ -184,14 +184,14 @@ void TTY_GetScrollOffset(TTY* tty, int* scroll_x, int* scroll_y)
 
 void TTY_SetCursor(TTY* tty, int x, int y)
 {
-  tty->cursor_x = modulo(x, tty->width);
-  tty->cursor_y = modulo(y, tty->height);
+  tty->cursor_x = modulo(x + tty->scroll_x, tty->width);
+  tty->cursor_y = modulo(y + tty->scroll_y, tty->height);
 }
 
 void TTY_GetCursor(TTY* tty, int* x, int* y)
 {
-  *x = tty->cursor_x;
-  *y = tty->cursor_y;
+  *x = tty->cursor_x - tty->scroll_x;
+  *y = tty->cursor_y - tty->scroll_y;
 }
 
 void TTY_Clear(TTY* tty)
@@ -211,7 +211,7 @@ void TTY_putchar(TTY* tty, char chr)
 {
   if (chr == '\n')
     {
-      tty->cursor_x = 0;
+      tty->cursor_x = tty->scroll_x;
       tty->cursor_y = modulo(tty->cursor_y  + 1, tty->height);
 
       if (modulo(tty->cursor_y - tty->scroll_y, tty->height) == 0)
@@ -222,7 +222,7 @@ void TTY_putchar(TTY* tty, char chr)
     }
   else if (chr == '\r')
     {
-      tty->cursor_x = 0;
+      tty->cursor_x = tty->scroll_x;
     }
   else
     {      
@@ -231,7 +231,7 @@ void TTY_putchar(TTY* tty, char chr)
       tty->cursor_x += 1;
       if (tty->cursor_x == tty->width)
         {
-          tty->cursor_x = 0;
+          tty->cursor_x = tty->scroll_x;
           tty->cursor_y = modulo(tty->cursor_y  + 1, tty->height);
 
           if (modulo(tty->cursor_y - tty->scroll_y, tty->height) == 0)
@@ -410,6 +410,19 @@ int main()
               quit = 1;
               break;
 
+            case SDL_MOUSEBUTTONDOWN:
+              if (event.button.button == 1)
+                {
+                  if (event.button.x >= 80
+                      && event.button.y >= 60
+                      && ((event.button.x - 80) / tty->font->glyph_width) < tty->width
+                      && ((event.button.y - 60) / tty->font->glyph_height) < tty->height)
+                  TTY_SetCursor(tty, 
+                                (event.button.x - 80) / tty->font->glyph_width,
+                                (event.button.y - 60) / tty->font->glyph_height);
+                }
+              break;
+              
             case SDL_KEYDOWN:
               if (event.key.keysym.sym == SDLK_RETURN)
                 {
