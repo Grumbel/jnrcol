@@ -148,6 +148,9 @@ TTY_Create(int width, int height)
 
   tty->scroll_x = 0;
   tty->scroll_y = 0;
+
+  tty->cursor_x = 0;
+  tty->cursor_y = 0;
   
   TTY_Clear(tty);
 
@@ -194,10 +197,6 @@ void TTY_GetCursor(TTY* tty, int* x, int* y)
 void TTY_Clear(TTY* tty)
 { 
   int y;
-
-  tty->cursor_x = 0;
-  tty->cursor_y = 0;
-
   for(y = 0; y < tty->height; ++y)
     memset(tty->framebuffer[y], 0, tty->width);
 }
@@ -213,12 +212,12 @@ void TTY_putchar(TTY* tty, char chr)
   if (chr == '\n')
     {
       tty->cursor_x = 0;
-      tty->cursor_y += 1;
+      tty->cursor_y = modulo(tty->cursor_y  + 1, tty->height);
 
-      if (tty->cursor_y == tty->height)
+      if (modulo(tty->cursor_y - tty->scroll_y, tty->height) == 0)
         {
-          /* FIXME: insert scroll_one_line code here */
-          tty->cursor_y = 0;
+          tty->scroll_y = modulo(tty->scroll_y + 1, tty->height);
+          memset(tty->framebuffer[tty->cursor_y], 0, tty->width);
         }
     }
   else if (chr == '\r')
@@ -233,12 +232,12 @@ void TTY_putchar(TTY* tty, char chr)
       if (tty->cursor_x == tty->width)
         {
           tty->cursor_x = 0;
-          tty->cursor_y += 1;
+          tty->cursor_y = modulo(tty->cursor_y  + 1, tty->height);
 
-          if (tty->cursor_y == tty->height)
+          if (modulo(tty->cursor_y - tty->scroll_y, tty->height) == 0)
             {
-              /* FIXME: insert scroll_one_line code here */
-              tty->cursor_y = 0;
+              tty->scroll_y = modulo(tty->scroll_y + 1, tty->height);
+              memset(tty->framebuffer[tty->cursor_y], 0, tty->width);
             }
         }
     }
@@ -279,7 +278,9 @@ void TTY_Blit(TTY* tty, SDL_Surface* screen, int screen_x, int screen_y)
         {
           if (tty->print_cursor)
             {
-              if (x == tty->cursor_x && y == tty->cursor_y && (SDL_GetTicks()/200) % 2 == 0)
+              if (modulo(x + tty->scroll_x, tty->width) == tty->cursor_x &&
+                  modulo(y + tty->scroll_y, tty->height) == tty->cursor_y &&
+                  (SDL_GetTicks()/200) % 2 == 0)
                 {
                   TTY_GetGlyph(tty->font, tty->cursor_character, &src_rect);
 
@@ -499,6 +500,7 @@ int main()
 
         SDL_FillRect(screen, &rect, SDL_MapRGB(screen->format, 0, 0, 202));
       }
+      
       TTY_Blit(tty, screen, 80, 60);
 
       SDL_Flip(screen);
