@@ -58,6 +58,7 @@ int main(int argc, char** argv)
         SDL_UnlockSurface(temp);
       }
     }
+  return 0;
 }
 
 /* EOF */

@@ -31,6 +31,7 @@
 #include <SDL_image.h>
 #include "font8x12.h"
 #include "SDL_tty.h"
+#include <string.h>
 
 static int modulo(int x, int y)
 {
@@ -41,9 +42,42 @@ static int modulo(int x, int y)
   return xmody;
 }
 
-#define TTY_CreateRGBSurface(name) SDL_CreateRGBSurfaceFrom( name##_data, \
-                                      name##_width, name##_height, name##_bpp, name##_pitch, \
-                                      name##_rmask, name##_gmask,  name##_bmask, name##_amask )
+              #include <stdio.h>
+              #include <stdlib.h>
+              #include <stdarg.h>
+
+char *
+make_message(const char *fmt, va_list ap)
+{
+  /* Guess we need no more than 100 bytes. */
+  int n, size = 100;
+  char *p, *np;
+ 
+  if ((p = malloc (size)) == NULL)
+    return NULL;
+
+  while (1) {
+    /* Try to print in the allocated space. */
+    //va_start(ap, fmt);
+
+    n = vsnprintf (p, size, fmt, ap);
+    va_end(ap);
+    /* If that worked, return the string. */
+    if (n > -1 && n < size)
+      return p;
+    /* Else try again with more space. */
+    if (n > -1)    /* glibc 2.1 */
+      size = n+1; /* precisely what is needed */
+    else           /* glibc 2.0 */
+      size *= 2;  /* twice the old size */
+    if ((np = realloc (p, size)) == NULL) {
+      free(p);
+      return NULL;
+    } else {
+      p = np;
+    }
+  }
+}
 
 TTY_Font*
 TTY_CreateFont(SDL_Surface* surface, int glyph_width, int glyph_height, char* letters)
@@ -88,6 +122,61 @@ TTY_GetGlyph(TTY_Font* font, char idx, SDL_Rect* rect)
   rect->h = font->glyph_height;
 }
 
+void TTY_Printf(TTY_Font* font, SDL_Surface* screen, int x, int y, Uint32 flags, const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  char* str = make_message(fmt, ap);
+  TTY_Print(font, screen, x, y, flags, str);
+  free(str);
+}
+
+int FNT_GetTextHeight(TTY_Font* font, const char* text)
+{
+  int lines = 1;
+  int i;
+  for(i = 0; text[i] != '\0'; ++i)
+    {
+      if (text[i] == '\n')
+        {
+          lines += 1;
+        }
+    }
+  return lines * font->glyph_height;
+}
+
+int FNT_GetTextWidth(TTY_Font* font, const char* text)
+{
+  int longest_line = 0;
+  int line = 0;
+  int i;
+  for(i = 0; text[i] != '\0'; ++i)
+    {
+      if (text[i] == '\n')
+        {
+          if (line > longest_line)
+            longest_line = line;
+          line = 0;
+        }
+      else
+        {
+          line += 1;
+        }
+    }
+
+  if (line > longest_line)
+    longest_line = line;
+
+  return longest_line * font->glyph_width;
+}
+
+int FNT_GetTextLineWidth(TTY_Font* font, const char* text)
+{
+  int i;
+  for(i = 0; text[i] != '\0' && text[i] != '\n'; ++i);
+  return i * font->glyph_width;
+}
+
 void
 TTY_Print(TTY_Font* font, SDL_Surface* screen, int x, int y, Uint32 flags, const char *str)
 {
@@ -99,11 +188,50 @@ TTY_Print(TTY_Font* font, SDL_Surface* screen, int x, int y, Uint32 flags, const
 
   int i;
 
+  int text_width  = FNT_GetTextWidth(font, str);
+  int text_height = FNT_GetTextHeight(font, str);
+
+  if ((flags & FNT_ALIGN_LEFT) && (flags & FNT_ALIGN_RIGHT))
+    {
+      x -= text_width/2;
+    }
+  else if (flags & FNT_ALIGN_LEFT)
+    {
+    }
+  else if (flags & FNT_ALIGN_RIGHT)
+    {
+      x -= text_width;
+    }
+
+  if ((flags & FNT_ALIGN_TOP) && (flags & FNT_ALIGN_BOTTOM))
+    {
+      y -= text_height/2;
+    }
+  else if (flags & FNT_ALIGN_TOP)
+    {
+    }
+  else if (flags & FNT_ALIGN_BOTTOM)
+    {
+      y -= text_height;
+    }
+
   for(i = 0; str[i] != '\0'; ++i)
     {
       if (str[i] == '\n')
         {
-          x_of = 0;
+          if ((flags & FNT_ALIGN_LEFT) && (flags & FNT_ALIGN_RIGHT))
+            {
+              x_of = text_width/2 - FNT_GetTextLineWidth(font, str+i+1)/2;
+            }
+          else if (flags & FNT_ALIGN_LEFT)
+            {
+              x_of = 0;
+            }
+          else if (flags & FNT_ALIGN_RIGHT)
+            {
+              x_of = text_width - FNT_GetTextLineWidth(font, str+i+1);
+            }
+
           y_of += font->glyph_height;
         }
       else
@@ -121,19 +249,20 @@ TTY_Print(TTY_Font* font, SDL_Surface* screen, int x, int y, Uint32 flags, const
 }
 
 TTY*
-TTY_Create(int width, int height)
+TTY_Create(int width, int height, TTY_Font* font)
 {
   int i;
   TTY* tty = (TTY*)malloc(sizeof(TTY));
 
-  /* SDL_Surface* temp = TTY_CreateRGBSurface(font8x12); */
-  SDL_Surface* temp = IMG_Load("c64_16x16.png");
+  // SDL_Surface* temp = TTY_CreateRGBSurface(font8x12);
+  // SDL_Surface* temp = IMG_Load("c64_16x16.png");
       
-  tty->font = TTY_CreateFont(temp, 16, 16, 
-                             "\x7f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                             "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
+  //tty->font = TTY_CreateFont(temp, 16, 16, 
+  //                         "\x7f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  //                         "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
+  tty->font = font;
 
-  SDL_FreeSurface(temp);
+  //SDL_FreeSurface(temp);
   
   /* Create Framebuffer */
   tty->framebuffer = (char**)malloc(sizeof(char*) * height);
@@ -161,7 +290,8 @@ void
 TTY_Free(TTY* tty)
 {
   int i;
-  TTY_FreeFont(tty->font);
+  
+  // TTY_FreeFont(tty->font);
 
   for(i = 0; i < tty->height; ++i)
     free(tty->framebuffer[i]);
@@ -322,206 +452,11 @@ void TTY_Blit(TTY* tty, SDL_Surface* screen, int screen_x, int screen_y)
 
 void TTY_printf(TTY* tty, const char *fmt, ...)
 {
-  /* Guess we need no more than 100 bytes. */
-  int n, size = 100;
-  char *p, *np;
-  va_list ap;
-
-  if ((p = malloc (size)) == NULL)
-    return; /* FIXME: Error */
-
-  while (1) {
-    /* Try to print in the allocated space. */
-    va_start(ap, fmt);
-    n = vsnprintf(p, size, fmt, ap);
-    va_end(ap);
-    /* If that worked, return the string. */
-    if (n > -1 && n < size)
-      {
-        TTY_print(tty, p);
-        free(p);
-        return; /* Success */
-      }
-    /* Else try again with more space. */
-    if (n > -1)    /* glibc 2.1 */
-      size = n+1; /* precisely what is needed */
-    else           /* glibc 2.0 */
-      size *= 2;  /* twice the old size */
-    if ((np = realloc (p, size)) == NULL) {
-      free(p);
-      return; /* FIXME: Error */
-    } else {
-      p = np;
-    }
-  }
+ va_list ap;
+ va_start(ap, fmt);
+ char* str = make_message(fmt, ap);
+ TTY_print(tty, str);
+ free(str);
 }
-
-#ifdef __TEST__
-
-/*  Compile via:
- *
- *   gcc -D__TEST__ -ansi -pedantic -Wall -g -O2 -o SDL_tty SDL_tty.c `sdl-config --cflags --libs` -lSDL_image 
- *
- */
-
-int main()
-{
-  SDL_Surface* screen;
-  int quit = 0;
-  TTY* tty;
-  SDL_Event event;
-
-  if( SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) <0 )
-    {
-      printf("Unable to init SDL: %s\n", SDL_GetError());
-      exit(EXIT_FAILURE);
-    }
-  atexit(SDL_Quit);
-  
-  screen = SDL_SetVideoMode(800, 600, 0,
-                            SDL_HWSURFACE|SDL_DOUBLEBUF); /* |SDL_FULLSCREEN);*/
-
-  SDL_WM_SetCaption("C64 Look alike", NULL);
-  SDL_EnableUNICODE(1); 
-  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-
-  if ( screen == NULL )
-    {
-      printf("Unable to set 640x480 video: %s\n", SDL_GetError());
-      exit(EXIT_FAILURE);
-    }
-
-  tty = TTY_Create(40, 30);
-
-  TTY_SetCursorCharacter(tty, '\x7f');
-  TTY_EnableVisibleCursor(tty, 1);
-
-  TTY_printf(tty, "\n    **** COMMODORE 64 BASIC V%d ****\n\n", 2);
-  TTY_printf(tty, " %dk RAM SYSTEM  38911 BASIC BYTES FREE\n\n", 64);
-  TTY_printf(tty, "READY.\n");
-
-  while (!quit)
-    {
-      while(SDL_PollEvent(&event))
-        {
-          switch(event.type) 
-            { 
-            case SDL_QUIT: 
-              quit = 1;
-              break;
-
-            case SDL_MOUSEBUTTONDOWN:
-              if (event.button.button == 1)
-                {
-                  if (event.button.x >= 80
-                      && event.button.y >= 60
-                      && ((event.button.x - 80) / tty->font->glyph_width) < tty->width
-                      && ((event.button.y - 60) / tty->font->glyph_height) < tty->height)
-                  TTY_SetCursor(tty, 
-                                (event.button.x - 80) / tty->font->glyph_width,
-                                (event.button.y - 60) / tty->font->glyph_height);
-                }
-              break;
-              
-            case SDL_KEYDOWN:
-              if (event.key.keysym.sym == SDLK_RETURN)
-                {
-                  TTY_putchar(tty, '\n');
-                }
-              else if (event.key.keysym.sym == SDLK_ESCAPE)
-                {
-                  exit(EXIT_SUCCESS);
-                }
-              else if (event.key.keysym.sym == SDLK_BACKSPACE)
-                {
-                  int cx, cy;
-                  TTY_GetCursor(tty, &cx, &cy);
-              
-                  if (cx == 0 && cy != 0)
-                    cy -= 1;
-                  else if (cx != 0)
-                    cx -= 1;
-                  else
-                    cy = tty->height - 1;
-              
-                  TTY_SetCursor(tty, cx, cy);
-                  TTY_putchar_nomove(tty, 0);
-                }
-
-              else if (event.key.keysym.sym == SDLK_HOME)
-                {
-                  int sx, sy;
-                  TTY_GetScrollOffset(tty, &sx, &sy);
-                  TTY_SetScrollOffset(tty, sx, sy + 1);
-                }
-              else if (event.key.keysym.sym == SDLK_END)
-                {
-                  int sx, sy;
-                  TTY_GetScrollOffset(tty, &sx, &sy);
-                  TTY_SetScrollOffset(tty, sx, sy - 1);
-                }
-
-              else if (event.key.keysym.sym == SDLK_DELETE)
-                {
-                  int sx, sy;
-                  TTY_GetScrollOffset(tty, &sx, &sy);
-                  TTY_SetScrollOffset(tty, sx - 1, sy);
-                }
-              else if (event.key.keysym.sym == SDLK_PAGEDOWN)
-                {
-                  int sx, sy;
-                  TTY_GetScrollOffset(tty, &sx, &sy);
-                  TTY_SetScrollOffset(tty, sx + 1, sy);
-                }
-
-              else if (event.key.keysym.sym == SDLK_LEFT)
-                {
-                  int cx, cy; TTY_GetCursor(tty, &cx, &cy);
-                  TTY_SetCursor(tty, cx - 1, cy);
-                }
-              else if (event.key.keysym.sym == SDLK_RIGHT)
-                {
-                  int cx, cy; TTY_GetCursor(tty, &cx, &cy);
-                  TTY_SetCursor(tty, cx + 1, cy);
-                }
-              else if (event.key.keysym.sym == SDLK_UP)
-                {
-                  int cx, cy; TTY_GetCursor(tty, &cx, &cy);
-                  TTY_SetCursor(tty, cx, cy - 1);
-                }
-              else if (event.key.keysym.sym == SDLK_DOWN)
-                {
-                  int cx, cy; TTY_GetCursor(tty, &cx, &cy);
-                  TTY_SetCursor(tty, cx, cy + 1);
-                }
-              else if (event.key.keysym.unicode && (event.key.keysym.unicode & 0xFF80) == 0) 
-                {
-                  TTY_putchar(tty, event.key.keysym.unicode & 0x7f);
-                }
-              break;
-            }
-        }
-
-      SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 138, 138, 255));
-
-      {
-        SDL_Rect rect;
-        rect.x = 80;
-        rect.y = 60;
-        rect.w = tty->width * tty->font->glyph_width;
-        rect.h = tty->height * tty->font->glyph_height;
-
-        SDL_FillRect(screen, &rect, SDL_MapRGB(screen->format, 0, 0, 202));
-      }
-      
-      TTY_Blit(tty, screen, 80, 60);
-
-      SDL_Flip(screen);
-    }
-
-  TTY_Free(tty);
-  return 0;
-}
-#endif
 
 /* EOF */

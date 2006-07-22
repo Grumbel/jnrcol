@@ -121,13 +121,14 @@ public:
   void update(float delta) 
   {
     //std::cout << "Delta: " << delta << std::endl;
+    if (!on_ground())
     vel_y += 10 * delta;
 
     if (jump)
       vel_y = -5;
 
     TTY_SetCursor(tty, 0, 28);
-    TTY_printf(tty, "Velocity: %f %d       \r",  vel_x, get_tile(x, y));
+    TTY_printf(tty, "Velocity: %3.2f %3.2f  %d  %d   \r",  vel_x, vel_y, get_tile(x, y), on_ground());
 
     float last_x = x;
     float last_y = y;
@@ -188,6 +189,14 @@ public:
   void right()
   {
     direction = RIGHT;
+  }
+
+  bool on_ground()
+  {
+    return 
+      vel_y == 0 && 
+      (get_tile(x + 16, y + 16) != ' ' ||
+       get_tile(x - 16, y + 16) != ' ');
   }
 };
 
@@ -268,11 +277,12 @@ public:
         else
           player.jump = false;  
 
-        if (keystates[SDLK_DOWN])
-          player.duck = true;
-        else
-          player.duck = false;
-
+        if (player.on_ground())
+          if (keystates[SDLK_DOWN])
+            player.duck = true;
+          else
+            player.duck = false;
+        
         for(int y =  0; y < 16; ++y)
           for(int x = 0; x < 20; ++x)
             {
