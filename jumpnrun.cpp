@@ -1,9 +1,10 @@
 #include <SDL.h>
+#include <SDL_image.h>
 #include <iostream>
 #include "SDL_tty.h"
 #include "jumpnrun.hpp"
 
-char* level[] = {
+const char* level[] = {
   "                    ",
   "                    ",
   "                    ",
@@ -236,7 +237,16 @@ public:
 
     SDL_SetClipRect(screen, &rect); 
 
-    tty = TTY_Create(40, 30);
+    {
+      //SDL_Surface* temp = TTY_CreateRGBSurface(font8x12);
+      SDL_Surface* temp = IMG_Load("c64_16x16.png");
+      
+      TTY_Font* font = TTY_CreateFont(temp, 16, 16, 
+                                      "\x7f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                      "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
+      tty = TTY_Create(40, 30, font);
+      SDL_FreeSurface(temp);
+    }
 
     TTY_printf(tty, "\n    **** COMMODORE 64 BASIC V2 ****\n\n");
     TTY_printf(tty, " 64k RAM SYSTEM  38911 BASIC BYTES FREE\n\n");
@@ -255,9 +265,9 @@ public:
           {
             switch(event.type) 
               { 
-              case SDL_QUIT: 
-                quit = true;
-                break;
+                case SDL_QUIT: 
+                  quit = true;
+                  break;
               }
           }
         
