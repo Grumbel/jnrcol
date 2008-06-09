@@ -47,7 +47,7 @@ typedef struct TTY_Font
 {
   /** 
    *  Surface containing the glyphs, glyphs have to be fixed width and
-   *  run from left to right, seperating the glyphs to multiple lines
+   *  run from left to right, separating the glyphs to multiple lines
    *  is allowed
    */
   SDL_Surface* surface;
@@ -87,13 +87,13 @@ typedef struct TTY
 
   /** 
    *  The cursors x position in the framebuffer in screen coordinates,
-   *  use TTY_SetCursor() to avoid throuble when scrolling
+   *  use TTY_SetCursor() to avoid trouble when scrolling
    */
   int cursor_x;
 
   /** 
    *  The cursors y position in the framebuffer in screen coordinates,
-   *  use TTY_SetCursor() to avoid throuble when scrolling
+   *  use TTY_SetCursor() to avoid trouble when scrolling
    */
   int cursor_y;
 
@@ -139,7 +139,7 @@ void      TTY_FreeFont(TTY_Font* font);
  *  Calculate the position of character \a idx in the surface used by
  *  \a font and write the result to \a rect
  */
-void TTY_GetGlypth(TTY_Font* font, char idx, SDL_Rect* rect);
+void TTY_GetGlyph(TTY_Font* font, char idx, SDL_Rect* rect);
 
 enum {
   FNT_ALIGN_LEFT     = (1<<0),
