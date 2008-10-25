@@ -174,7 +174,7 @@ public:
     else
       draw_rect(int(x - 16), int(y - 64) - 16, 32, 64, 150, 200, 150);
 
-    TTY_Print(tty->font, screen, (int)x, (int)y-16, 0, "Hello\nWorld");
+    FNT_Print(tty->font, screen, (int)x, (int)y-16, FNT_ALIGN_CENTER, "Hello\nWorld");
   }
   
   void left()
@@ -246,11 +246,10 @@ public:
           printf("Error: Couldn't load %s\n", font_file);
           exit(EXIT_FAILURE);
         }
-
       
-      TTY_Font* font = TTY_CreateFont(temp, 16, 16, 
-                                      "\x7f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                      "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
+      TTY_Font* font = FNT_Create(temp, 16, 16, 
+                                  "\x7f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                  "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
       tty = TTY_Create(40, 30, font);
       SDL_FreeSurface(temp);
     }
