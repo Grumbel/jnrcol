@@ -29,7 +29,6 @@
 #include <assert.h>
 #include <SDL.h>
 #include <SDL_image.h>
-#include "font8x12.h"
 #include "SDL_tty.h"
 #include <string.h>
 
@@ -41,10 +40,6 @@ static int modulo(int x, int y)
   }
   return xmody;
 }
-
-              #include <stdio.h>
-              #include <stdlib.h>
-              #include <stdarg.h>
 
 char *
 make_message(const char *fmt, va_list ap)
@@ -452,11 +447,11 @@ void TTY_Blit(TTY* tty, SDL_Surface* screen, int screen_x, int screen_y)
 
 void TTY_printf(TTY* tty, const char *fmt, ...)
 {
- va_list ap;
- va_start(ap, fmt);
- char* str = make_message(fmt, ap);
- TTY_print(tty, str);
- free(str);
+  va_list ap;
+  va_start(ap, fmt);
+  char* str = make_message(fmt, ap);
+  TTY_print(tty, str);
+  free(str);
 }
 
 /* EOF */
