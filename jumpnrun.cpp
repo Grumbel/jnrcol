@@ -52,11 +52,11 @@ void draw_rect(int x, int y, int w, int h, unsigned char r, unsigned char b, uns
   Uint32 shadow    = SDL_MapRGB(screen->format, r - 50, g - 50, b - 50);
 
   /*  if (down)
-    {
+      {
       Uint32 tmp = highlight;
       highlight = shadow;
       shadow = tmp;
-    }*/
+      }*/
 
   rect.h = h;
         
@@ -123,7 +123,7 @@ public:
   {
     //std::cout << "Delta: " << delta << std::endl;
     if (!on_ground())
-    vel_y += 10 * delta;
+      vel_y += 10 * delta;
 
     if (jump)
       vel_y = -5;
@@ -151,19 +151,19 @@ public:
 
     switch(direction)
       {
-      case LEFT:
-        if (vel_x > -5.0f)
-          vel_x -= 10 * delta;
-        break;
+        case LEFT:
+          if (vel_x > -5.0f)
+            vel_x -= 10 * delta;
+          break;
 
-      case RIGHT:
-        if (vel_x < 5.0f)
-          vel_x += 10 * delta;
-        break;
+        case RIGHT:
+          if (vel_x < 5.0f)
+            vel_x += 10 * delta;
+          break;
 
-      case NONE:
-        vel_x -= vel_x * delta * 10.0f;
-        break;
+        case NONE:
+          vel_x -= vel_x * delta * 10.0f;
+          break;
       }
   }
 
@@ -239,7 +239,14 @@ public:
 
     {
       //SDL_Surface* temp = TTY_CreateRGBSurface(font8x12);
-      SDL_Surface* temp = IMG_Load("c64_16x16.png");
+      const char* font_file = "../SDL_tty/c64_16x16.png";
+      SDL_Surface* temp = IMG_Load(font_file);
+      if (!temp)
+        {
+          printf("Error: Couldn't load %s\n", font_file);
+          exit(EXIT_FAILURE);
+        }
+
       
       TTY_Font* font = TTY_CreateFont(temp, 16, 16, 
                                       "\x7f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"

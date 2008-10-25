@@ -1,11 +1,11 @@
 # -*- python -*-
 
 env = Environment(CXXFLAGS=['-Wall', '-O2'],
+                CPPPATH=['../SDL_tty'],
                   LIBS=['SDL_image'])
 env.ParseConfig("sdl-config --cflags --libs")
 
-env.Program('fontdump', ['fontdump.c'])
 env.Program('jumpnrun', ['jumpnrun.cpp',
-                         'SDL_tty.c'])
+                         '../SDL_tty/SDL_tty.c'])
 
 # EOF #
