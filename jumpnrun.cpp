@@ -1,7 +1,8 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <iostream>
-#include "SDL_tty.h"
+
+#include "SDL_tty/SDL_tty.h"
 #include "jumpnrun.hpp"
 
 const char* level[] = {
@@ -239,7 +240,7 @@ public:
 
     {
       //SDL_Surface* temp = TTY_CreateRGBSurface(font8x12);
-      const char* font_file = "../SDL_tty/c64_16x16.png";
+      const char* font_file = "c64_16x16.png";
       SDL_Surface* temp = IMG_Load(font_file);
       if (!temp)
         {
@@ -292,12 +293,14 @@ public:
           player.jump = true;  
         else
           player.jump = false;  
-
+        
         if (player.on_ground())
+        {
           if (keystates[SDLK_DOWN])
             player.duck = true;
           else
             player.duck = false;
+        }
         
         for(int y =  0; y < 16; ++y)
           for(int x = 0; x < 20; ++x)

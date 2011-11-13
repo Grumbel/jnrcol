@@ -5,7 +5,6 @@ env = Environment(CXXFLAGS=['-Wall', '-O2'],
                   LIBS=['SDL_image'])
 env.ParseConfig("sdl-config --cflags --libs")
 
-env.Program('jumpnrun', ['jumpnrun.cpp',
-                         '../SDL_tty/SDL_tty.c'])
+env.Program('jumpnrun', ['jumpnrun.cpp', 'SDL_tty/SDL_tty.c'])
 
 # EOF #
