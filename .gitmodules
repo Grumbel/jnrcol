@@ -1,0 +1,3 @@
+[submodule "external/SDL_tty"]
+	path = external/SDL_tty
+	url = https://github.com/Grumbel/SDL_tty.git

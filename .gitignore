@@ -1,3 +1,2 @@
-*.o
-.sconsign.dblite
-jumpnrun
+*~
+/build*

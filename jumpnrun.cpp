@@ -1,9 +1,9 @@
+#include "jumpnrun.hpp"
+
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_tty.h>
 #include <iostream>
-
-#include "SDL_tty/SDL_tty.h"
-#include "jumpnrun.hpp"
 
 const char* level[] = {
   "                    ",
@@ -60,7 +60,7 @@ void draw_rect(int x, int y, int w, int h, unsigned char r, unsigned char b, uns
       }*/
 
   rect.h = h;
-        
+
   SDL_FillRect(screen, &rect, normal);
 
   rect.w = 2;
@@ -87,7 +87,7 @@ class Player
 public:
   float x;
   float y;
-  
+
   float vel_x;
   float vel_y;
   bool jump;
@@ -102,7 +102,7 @@ public:
 
     vel_x = 0;
     vel_y = 0;
-    
+
     jump = false;
     duck = false;
     direction = NONE;
@@ -110,7 +110,7 @@ public:
 
   bool clean()
   {
-    return 
+    return
       get_tile(x-16, y)      != ' ' ||
       get_tile(x-16, y - 31) != ' ' ||
       get_tile(x+16, y)      != ' ' ||
@@ -120,7 +120,7 @@ public:
         get_tile(x+16, y - 63) != ' '));
   }
 
-  void update(float delta) 
+  void update(float delta)
   {
     //std::cout << "Delta: " << delta << std::endl;
     if (!on_ground())
@@ -177,7 +177,7 @@ public:
 
     FNT_Print(tty->font, screen, (int)x, (int)y-16, FNT_ALIGN_CENTER, "Hello\nWorld");
   }
-  
+
   void left()
   {
     direction = LEFT;
@@ -195,8 +195,8 @@ public:
 
   bool on_ground()
   {
-    return 
-      vel_y == 0 && 
+    return
+      vel_y == 0 &&
       (get_tile(x + 16, y + 16) != ' ' ||
        get_tile(x - 16, y + 16) != ' ');
   }
@@ -206,7 +206,7 @@ class JumpnRun
 {
 private:
 
-public:  
+public:
   JumpnRun()
   {
     screen = 0;
@@ -220,10 +220,10 @@ public:
         exit(EXIT_FAILURE);
       }
     atexit(SDL_Quit);
-    
+
     screen = SDL_SetVideoMode(640, 480, 0,
                               SDL_HWSURFACE|SDL_DOUBLEBUF);
-    
+
     if ( screen == NULL )
       {
         printf("Unable to set 640x480 video: %s\n", SDL_GetError());
@@ -236,7 +236,7 @@ public:
     rect.w = 640;
     rect.h = 480;
 
-    SDL_SetClipRect(screen, &rect); 
+    SDL_SetClipRect(screen, &rect);
 
     {
       //SDL_Surface* temp = TTY_CreateRGBSurface(font8x12);
@@ -247,8 +247,8 @@ public:
           printf("Error: Couldn't load %s\n", font_file);
           exit(EXIT_FAILURE);
         }
-      
-      TTY_Font* font = FNT_Create(temp, 16, 16, 
+
+      TTY_Font* font = FNT_Create(temp, 16, 16,
                                   "\x7f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                   "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
       tty = TTY_Create(40, 30, font);
@@ -270,30 +270,30 @@ public:
       {
         while(SDL_PollEvent(&event))
           {
-            switch(event.type) 
-              { 
-                case SDL_QUIT: 
+            switch(event.type)
+              {
+                case SDL_QUIT:
                   quit = true;
                   break;
               }
           }
-        
+
         Uint8 *keystates = SDL_GetKeyState( NULL );
 
         if (keystates[SDLK_LEFT])
           player.left();
-        
+
         else if (keystates[SDLK_RIGHT])
           player.right();
 
-        else 
+        else
           player.stop();
 
         if (keystates[SDLK_SPACE])
-          player.jump = true;  
+          player.jump = true;
         else
-          player.jump = false;  
-        
+          player.jump = false;
+
         if (player.on_ground())
         {
           if (keystates[SDLK_DOWN])
@@ -301,7 +301,7 @@ public:
           else
             player.duck = false;
         }
-        
+
         for(int y =  0; y < 16; ++y)
           for(int x = 0; x < 20; ++x)
             {
@@ -326,7 +326,7 @@ public:
           }
         player.draw();
         TTY_Blit(tty, screen, 0, 0);
-        SDL_Flip(screen);      
+        SDL_Flip(screen);
       }
   }
 
